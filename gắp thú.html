@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Máy Gắp Thú Cưng & Nông Trại 3D</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 20px;
+            overflow-x: hidden;
+        }
+        .game-container { max-width: 1200px; width: 100%; margin: 0 auto; padding: 20px; }
+        .game-header { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px); flex-wrap: wrap; gap: 15px; }
+        .game-header h1 { font-size: 2.5rem; font-weight: 800; color: #4f46e5; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1); }
+        .player-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .resource-display { padding: 8px 15px; border-radius: 25px; font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .coin-display { background: linear-gradient(135deg, #ffd700, #ffed4e); color: #333; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); }
+        .points-display { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
+        .food-display { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
+        .water-display { background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: white; }
+        .main-content { display: flex; flex-direction: column; gap: 20px; margin-bottom: 20px; }
+        .machines-section { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .machine-container { border-radius: 20px; padding: 0; box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.2), inset 0 0 20px rgba(0,0,0,0.2); overflow: hidden; position: relative; border-bottom: 8px solid rgba(0,0,0,0.3); border-right: 8px solid rgba(0,0,0,0.3); }
+        .pink-machine { border-color: #be185d; background: linear-gradient(135deg, #ec4899, #be185d); }
+        .blue-machine { border-color: #1d4ed8; background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .machine-header { padding: 15px; text-align: center; background: rgba(255, 255, 255, 0.1); border-bottom: 2px solid rgba(255,255,255,0.2); }
+        .machine-logo { display: flex; align-items: center; justify-content: center; gap: 10px; color: white; }
+        .logo-icon { font-size: 2rem; }
+        .logo-text { text-align: left; }
+        .brand-name { font-size: 1.2rem; font-weight: 800; letter-spacing: 2px; }
+        .model-name { font-size: 1.5rem; font-weight: 900; letter-spacing: 1px; }
+        .game-screen { position: relative; background: #111; margin: 10px; border-radius: 15px; border: 2px solid rgba(255, 255, 255, 0.3); overflow: hidden; box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
+        #clawMachine1, #clawMachine2 { display: block; width: 100%; height: 250px; }
+        .control-panel { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 15px; }
+        .grab-btn { padding: 12px 24px; border-radius: 20px; font-size: 1rem; display: flex; align-items: center; gap: 8px; min-width: 180px; justify-content: center; border: none; color: white; cursor: pointer; transition: all 0.3s ease; font-weight: 600; }
+        .pink-grab { background: linear-gradient(135deg, #ec4899, #be185d); box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3); }
+        .blue-grab { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+        .grab-btn:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
+        .grab-btn:disabled { opacity: 0.5; cursor: not-allowed; background: #9ca3af !important; }
+        .section-box { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px); margin-bottom: 20px; }
+        .section-box h3, .section-box h4 { font-size: 1.5rem; font-weight: 700; color: #4f46e5; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .pet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; padding-right: 10px; }
+        .pet-item { border-radius: 15px; padding: 15px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; border-left: 5px solid transparent; position: relative; }
+        .pet-item:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); }
+        .pet-item.mythical { border-left-color: #ff4757; background: linear-gradient(135deg, #ff7f50, #ff6b81); color: white; }
+        .pet-item.legendary { border-left-color: #fbc531; background: linear-gradient(135deg, #feca57, #ff9f43); color: white; }
+        .pet-item.epic { border-left-color: #9c88ff; background: linear-gradient(135deg, #a29bfe, #d6a2e8); color: white; }
+        .pet-item.rare { border-left-color: #487eb0; background: linear-gradient(135deg, #4bcffa, #3498db); color: white; }
+        .pet-item.uncommon { border-left-color: #2ed573; background: linear-gradient(135deg, #55efc4, #00b894); color: white; }
+        .pet-display { display: flex; flex-direction: column; align-items: center; position: relative; width: 50px; height: 50px; }
+        .pet-emoji { font-size: 3rem; margin-bottom: 5px; line-height: 1; }
+        .pet-emoji svg { width: 50px; height: 50px; display: inline-block; }
+        .pet-count { background: #ef4444; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; position: absolute; top: -5px; right: -5px; }
+        .pet-stars { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; font-size: 12px; color: #f59e0b; text-shadow: 0 0 2px black; }
+        .pet-details { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .pet-name { font-size: 1.1rem; font-weight: 700; color: #1f2937; }
+        .pet-rarity { font-size: 0.9rem; font-weight: 600; opacity: 0.7; }
+        .pet-sell-price { font-size: 1rem; font-weight: 600; }
+        .sell-pet-btn { background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 5px; min-width: 80px; justify-content: center; }
+        .sell-pet-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .action-btn, .daily-login-btn, .submit-code-btn { border: none; color: white; padding: 10px 20px; border-radius: 25px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; }
+        .action-btn:hover:not(:disabled), .daily-login-btn:hover, .submit-code-btn:hover { transform: translateY(-2px); }
+        .spin-btn { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); }
+        .spin-btn:hover:not(:disabled) { box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
+        .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; background: linear-gradient(135deg, #9ca3af, #6b7280); }
+        .daily-login-btn { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .daily-login-btn:hover { box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4); }
+        .daily-login-btn:disabled { background: #6b7280; opacity: 0.7; }
+        .code-input-section { display: flex; gap: 10px; align-items: center; }
+        .code-input { padding: 10px 15px; border: 2px solid #e5e7eb; border-radius: 20px; font-size: 14px; outline: none; transition: all 0.3s ease; min-width: 150px; }
+        .code-input:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        .submit-code-btn { background: linear-gradient(135deg, #4f46e5, #3730a3); padding: 10px 15px; }
+        .submit-code-btn:hover { box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); }
+        .pet-info-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;}
+        .pet-tab { background: #e5e7eb; border: none; color: #374151; padding: 10px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        .pet-tab.active { background: linear-gradient(135deg, #4f46e5, #3730a3); color: white; }
+        .pet-info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; }
+        .pet-info-item { background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 15px; text-align: center; transition: all 0.3s ease; cursor: pointer; border: 3px solid transparent; }
+        .pet-info-item:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); }
+        .pet-info-item.owned { border-color: #10b981; background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+        .pet-info-item.unknown { background: linear-gradient(135deg, #374151, #1f2937); color: white; }
+        .pet-info-emoji { font-size: 2.5rem; margin-bottom: 8px; display: block; height: 40px; line-height: 40px; }
+        .pet-info-emoji svg { width: 40px; height: 40px; display: inline-block; }
+        .pet-info-name { font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; }
+        
+        /* Farm Modal Styles */
+        .farm-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .farm-modal-content { background: #f0fdf4; padding: 15px; border-radius: 20px; width: 100%; max-width: 1100px; max-height: 90vh; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 10px; }
+        .farm-header { display: flex; justify-content: space-between; align-items: center; padding: 0 10px; }
+        .farm-header h2 { font-size: 1.8rem; color: #4f46e5; }
+        .close-farm-btn { font-size: 2rem; font-weight: bold; color: #666; cursor: pointer; background: none; border: none; }
+        .farm-main-area { display: flex; flex: 1; gap: 15px; min-height: 0; }
+        .farm-scene-container { flex: 1; position: relative; border-radius: 15px; overflow: hidden; background: #87CEEB; cursor: grab; }
+        .farm-scene-container:active { cursor: grabbing; }
+        #farmCanvas { width: 100%; height: 100%; display: block; }
+        .farm-toolbar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); border-radius: 20px; padding: 10px; display: flex; gap: 15px; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        #toolbar-manage-btn { background: #8b5cf6; color: white; cursor: pointer; }
+        
+        /* Management Panel (Separate Modal) */
+        .manage-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; display: none; justify-content: center; align-items: center; }
+        .manage-modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
+        .manage-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .manage-modal-header h3 { color: #4f46e5; }
+        .close-manage-btn { font-size: 1.5rem; cursor: pointer; background: none; border: none; color: #666; }
+        .farm-pet-list { max-height: 250px; overflow-y: auto; padding: 5px; background: #e5e7eb; border-radius: 10px; }
+        .farm-pet-list-item { display: flex; align-items: center; justify-content: space-between; padding: 8px; border-radius: 8px; margin-bottom: 5px; background: white; }
+        .farm-pet-list-item span { font-weight: 600; }
+        .add-pet-btn { background: #3b82f6; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 1.2rem; cursor: pointer; }
+        .add-pet-btn:disabled { background: #9ca3af; }
+        
+        #pet-interaction-popup { position: absolute; display: none; background: rgba(255, 255, 255, 0.9); border-radius: 10px; padding: 15px; border: 2px solid #4f46e5; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1010; text-align: center; width: 200px; transform: translate(-50%, -120%); }
+        .popup-pet-name { font-weight: bold; font-size: 1.2rem; margin-bottom: 5px; }
+        .popup-pet-stars { color: #f59e0b; font-size: 1.2rem; margin-bottom: 10px; }
+        .popup-upgrade-cost { font-size: 0.9rem; color: #666; margin-bottom: 10px; }
+        .popup-feed-btn { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; width: 100%; }
+        .popup-feed-btn:disabled { background: #9ca3af; }
+
+        @media (max-width: 1024px) {
+            .machines-section { grid-template-columns: 1fr; }
+            .farm-modal-content { flex-direction: column; height: 85vh; max-height: 800px; }
+            .farm-scene-container { flex-grow: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .game-header { flex-direction: column; gap: 15px; text-align: center; }
+            .game-header h1 { font-size: 2rem; }
+            .player-info { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <header class="game-header">
+            <h1><i class="fas fa-trophy"></i> Máy Gắp Thú Cưng</h1>
+            <div class="player-info">
+                <div class="resource-display coin-display"><i class="fas fa-coins"></i><span id="coinAmount">100,000</span></div>
+                <div class="resource-display points-display"><i class="fas fa-star"></i><span id="pointsAmount">0</span></div>
+                <div class="resource-display food-display"><i class="fas fa-drumstick-bite"></i><span id="foodAmount">100</span></div>
+                <div class="resource-display water-display"><i class="fas fa-tint"></i><span id="waterAmount">100</span></div>
+                <button id="spinBtn" class="action-btn spin-btn"><i class="fas fa-sync-alt"></i> Quay Thưởng</button>
+                <button id="dailyLoginBtn" class="daily-login-btn"><i class="fas fa-calendar-check"></i> Điểm danh</button>
+                <button id="openFarmBtn" class="action-btn" style="background: linear-gradient(135deg, #34d399, #059669);"><i class="fas fa-tractor"></i> Nông Trại</button>
+                <div class="code-input-section">
+                    <input type="text" id="codeInput" placeholder="Nhập mã code..." class="code-input">
+                    <button id="submitCodeBtn" class="submit-code-btn"><i class="fas fa-key"></i> Nhập</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <div class="main-content">
+            <div class="machines-section">
+                <div class="machine-container pink-machine">
+                    <div class="machine-header"><div class="machine-logo"><div class="logo-icon">👑</div><div class="logo-text"><div class="brand-name">COLORFUL</div><div class="model-name">BABY Ⅰ</div></div></div></div>
+                    <div class="game-screen"><canvas id="clawMachine1"></canvas></div>
+                    <div class="control-panel"><button id="grabBtn1" class="grab-btn pink-grab"><i class="fas fa-hand-paper"></i> Gắp (10,000 xu)</button></div>
+                </div>
+                <div class="machine-container blue-machine">
+                    <div class="machine-header"><div class="machine-logo"><div class="logo-icon">👑</div><div class="logo-text"><div class="brand-name">COLORFUL</div><div class="model-name">BABY Ⅱ</div></div></div></div>
+                    <div class="game-screen"><canvas id="clawMachine2"></canvas></div>
+                    <div class="control-panel"><button id="grabBtn2" class="grab-btn blue-grab"><i class="fas fa-hand-paper"></i> Gắp (10,000 xu)</button></div>
+                </div>
+            </div>
+            <div class="section-box">
+                <h3><i class="fas fa-book"></i> Thông Tin Thú Cưng</h3>
+                <div class="pet-info-tabs">
+                    <button class="pet-tab active" onclick="showPetRarity('mythical')">Thần Thoại</button>
+                    <button class="pet-tab" onclick="showPetRarity('legendary')">Huyền Thoại</button>
+                    <button class="pet-tab" onclick="showPetRarity('epic')">Sử Thi</button>
+                    <button class="pet-tab" onclick="showPetRarity('rare')">Hiếm</button>
+                    <button class="pet-tab" onclick="showPetRarity('uncommon')">Không Phổ Biến</button>
+                </div>
+                <div id="petInfoGrid" class="pet-info-grid"></div>
+            </div>
+            <div class="section-box">
+                <h3><i class="fas fa-paw"></i> Bộ Sưu Tập Thú Cưng</h3>
+                <div id="petCollection" class="pet-grid"></div>
+            </div>
+        </div>
+        <div class="section-box">
+            <h4><i class="fas fa-info-circle"></i> Hướng Dẫn</h4>
+            <ul>
+                <li>Sử dụng phím mũi tên hoặc A/D để điều khiển cần gắp. Nhấn Space/Enter để gắp.</li>
+                <li>Mỗi lần gắp tốn 10,000 xu. Gắp được thú hiếm (Sử Thi trở lên) sẽ được lượt quay thưởng.</li>
+                <li>Vào **Nông Trại**, nhấp vào thú cưng để mở bảng điều khiển và cho chúng ăn.</li>
+                <li>Thú cưng nhiều sao sẽ có ngoại hình đẹp hơn và bán được nhiều xu hơn.</li>
+                <li>Nhấn nút **Quản Lý** trong nông trại để thêm thú, mở rộng chuồng hoặc trang trí.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Farm Modal -->
+    <div id="farmModal" class="farm-modal">
+        <div class="farm-modal-content">
+            <div class="farm-header">
+                <h2><i class="fas fa-tractor"></i> Nông Trại</h2>
+                <button id="closeFarmBtn" class="close-farm-btn">&times;</button>
+            </div>
+            <div class="farm-main-area">
+                <div class="farm-scene-container">
+                    <canvas id="farmCanvas"></canvas>
+                    <div id="pet-interaction-popup"></div>
+                </div>
+            </div>
+             <div class="farm-toolbar">
+                <button class="action-btn" id="auto-feed-btn" style="background: #22c55e;"><i class="fas fa-utensils"></i> Cho Ăn Tự Động</button>
+                <div id="toolbar-manage-btn" class="action-btn" style="background: #8b5cf6;"><i class="fas fa-cogs"></i> Quản Lý</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Management Modal -->
+    <div id="manageModal" class="manage-modal">
+        <div class="manage-modal-content section-box">
+             <div class="manage-modal-header">
+                <h3><i class="fas fa-cogs"></i> Quản Lý Nông Trại</h3>
+                <button id="closeManageBtn" class="close-manage-btn">&times;</button>
+            </div>
+            <div class="farm-shop section-box">
+                <h4><i class="fas fa-store"></i> Cửa Hàng</h4>
+                <div class="shop-items">
+                    <div class="shop-item">
+                        <button class="action-btn" style="background: #f97316;" onclick="buyResource('food')"><i class="fas fa-drumstick-bite"></i> Mua Thức Ăn</button>
+                        <div class="upgrade-cost" style="text-align:center;">1000 xu / 10 cái</div>
+                    </div>
+                    <div class="shop-item">
+                        <button class="action-btn" style="background: #38bdf8;" onclick="buyResource('water')"><i class="fas fa-tint"></i> Mua Nước</button>
+                        <div class="upgrade-cost" style="text-align:center;">1000 xu / 10 cái</div>
+                    </div>
+                </div>
+            </div>
+            <div class="farm-management section-box">
+                <h4><i class="fas fa-igloo"></i> Cải Tiến Chuồng</h4>
+                <p id="farm-capacity-info">Sức chứa: 5 / 5</p>
+                <button class="action-btn" id="expand-farm-btn" onclick="upgradeFarmCapacity()">Mở Rộng (50,000 xu)</button>
+                <p id="farm-level-info" style="margin-top: 10px;">Cấp trang trí: 1</p>
+                <button class="action-btn" id="decorate-farm-btn" onclick="upgradeFarmCosmetics()">Trang Trí (100,000 xu)</button>
+            </div>
+            <div class="farm-management section-box">
+                <h4><i class="fas fa-plus-circle"></i> Thêm Thú Cưng</h4>
+                <div id="farm-add-pet-list" class="farm-pet-list">
+                    <!-- List of pets to add to farm -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="moveSound" preload="auto"><source src="data:audio/wav;base64,UklGRigBAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YSCgAAAA/v/8/f/9/v/+/////v/9/v/8/v/9/f/8/v/9/f/9/f/8/v/8/v/8/v/9/f/9/f/8/v/8/v/8/v/9/f/8/v/8/v/8/v/8/v/8/v/8/v/9/f/8/v/8/v/8/v/8/v/8/v/8/v/9/f/8/v/9/f/8/v/8/v/8/v/8/v/8/v/8/v/9/f/8/v/8/v/9/f/8/v/8/v/8/v/8/v/8/v/8/v/8/v/9/f/9/f/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/8/v/g" type="audio/wav"></audio>
+    <audio id="grabSound" preload="auto"><source src="data:audio/wav;base64,UklGRkYCAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YUIBAACAgP/AAP+A/4D/gICAgP+AgP+AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg- " type="audio/- " type="audio/wav"></audio>
+    <audio id="successSound" preload="auto"><source src="data:audio/wav;base64,UklGRqYDAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YaQDAACAgP+A/4D/gICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+A/4D/gICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+A/4D/gICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAAICAgP+AgP+AgIAAA- " type="audio/wav"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DATA ---
+            const PETS_DATA = {
+                mythical: [
+                    { id: 'dragon', name: 'Rồng Vàng', emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g transform="translate(5,5) scale(0.9)"><defs><linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#FFD700;" /><stop offset="100%" style="stop-color:#FFA500;" /></linearGradient></defs><path d="M50,5 C25,5 10,25 10,50 C10,75 25,95 50,95 C75,95 90,75 90,50 C90,25 75,5 50,5 Z M50,15 C69.3,15 80,30.7 80,50 C80,69.3 69.3,85 50,85 C30.7,85 20,69.3 20,50 C20,30.7 30.7,15 50,15 Z" fill="url(#gold)" stroke="#DAA520" stroke-width="2" /><path d="M40,30 Q50,20 60,30" stroke="red" stroke-width="2" fill="none" /><path d="M35,45 Q50,55 65,45" stroke="black" stroke-width="2" fill="none" /><path d="M45,60 L55,70 M55,60 L45,70" stroke="black" stroke-width="3" /><circle cx="40" cy="40" r="3" fill="red" /><circle cx="60" cy="40" r="3" fill="red" /><path d="M30,50 C40,60 60,60 70,50" stroke="black" stroke-width="2" fill="none" /><path d="M20,50 C10,40 10,60 20,50" fill="url(#gold)" stroke="#DAA520" stroke-width="1" /><path d="M80,50 C90,40 90,60 80,50" fill="url(#gold)" stroke="#DAA520" stroke-width="1" /></g></svg>`, rarity: 'mythical' },
+                    { id: 'phoenix', name: 'Phượng Hoàng', emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g transform="translate(5,5) scale(0.9)"><defs><radialGradient id="fire" cx="50%" cy="50%" r="50%" fx="50%" fy="50%"><stop offset="0%" style="stop-color: #FF4500;" /><stop offset="100%" style="stop-color: #FFD700;" /></radialGradient></defs><path d="M50,10 C80,40 90,80 50,95 C10,80 20,40 50,10 Z" fill="url(#fire)" stroke="red" stroke-width="2"/><path d="M50,10 C40,50 20,70 30,90" stroke="#FF8C00" stroke-width="3" fill="none" /><path d="M50,10 C60,50 80,70 70,90" stroke="#FF8C00" stroke-width="3" fill="none" /><circle cx="45" cy="45" r="4" fill="white" stroke="black" stroke-width="1"/><circle cx="55" cy="45" r="4" fill="white" stroke="black" stroke-width="1"/><circle cx="45" cy="45" r="2" fill="black"/><circle cx="55" cy="45" r="2" fill="black"/></g></svg>`, rarity: 'mythical' }
+                ],
+                legendary: [
+                    { id: 'unicorn', name: 'Kỳ Lân', emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g transform="translate(5,5) scale(0.9)"><defs><linearGradient id="rainbow" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="red"/><stop offset="20%" stop-color="orange"/><stop offset="40%" stop-color="yellow"/><stop offset="60%" stop-color="green"/><stop offset="80%" stop-color="blue"/><stop offset="100%" stop-color="purple"/></linearGradient></defs><path d="M20,80 C40,40 60,40 80,80 L 90,50 L 70,30 L 50,10 L 30,30 L 10,50 Z" fill="white" stroke="lightgray" stroke-width="2"/><path d="M50,10 L60,30" stroke="url(#rainbow)" stroke-width="5" /><circle cx="35" cy="45" r="4" fill="black"/><path d="M25,60 C35,70,45,70,55,60" fill="none" stroke="black" stroke-width="2"/></g></svg>`, rarity: 'legendary' },
+                    { id: 'tiger', name: 'Hổ Vương', emoji: '🐅', rarity: 'legendary' },
+                    { id: 'eagle', name: 'Đại Bàng', emoji: '🦅', rarity: 'legendary' }
+                ],
+                epic: [
+                    { id: 'lion', name: 'Sư Tử', emoji: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g transform="translate(5,5) scale(0.9)"><path d="M50,20 C 20,20 20,60 50,60 C 80,60 80,20 50,20 Z" fill="#FFD700" /><path d="M50,20 C 40,10 60,10 50,20" fill="#DAA520" /><path d="M30,40 a 5,5 0 0,1 10,0 a 5,5 0 0,1 -10,0" fill="black" /><path d="M60,40 a 5,5 0 0,1 10,0 a 5,5 0 0,1 -10,0" fill="black" /><path d="M40,55 A 10,5 0 0,0 60,55" fill="none" stroke="black" stroke-width="2" /></g></svg>`, rarity: 'epic' },
+                    { id: 'wolf', name: 'Sói Xám', emoji: '🐺', rarity: 'epic' },
+                    { id: 'fox', name: 'Cáo Đỏ', emoji: '🦊', rarity: 'epic' },
+                    { id: 'bear', name: 'Gấu Nâu', emoji: '🐻', rarity: 'epic' },
+                    { id: 'panda', name: 'Gấu Trúc', emoji: '🐼', rarity: 'epic' }
+                ],
+                rare: [
+                    { id: 'koala', name: 'Gấu Túi', emoji: '🐨', rarity: 'rare' },
+                    { id: 'monkey', name: 'Khỉ', emoji: '🐵', rarity: 'rare' },
+                    { id: 'leopard', name: 'Báo Đốm', emoji: '🐆', rarity: 'rare' },
+                    { id: 'cat', name: 'Mèo', emoji: '🐱', rarity: 'rare' },
+                    { id: 'dog', name: 'Chó', emoji: '🐶', rarity: 'rare' },
+                    { id: 'rabbit', name: 'Thỏ', emoji: '🐰', rarity: 'rare' }
+                ],
+                uncommon: [
+                    { id: 'hamster', name: 'Chuột Đồng', emoji: '🐹', rarity: 'uncommon' },
+                    { id: 'bird', name: 'Chim', emoji: '🐦', rarity: 'uncommon' },
+                    { id: 'fish', name: 'Cá', emoji: '🐠', rarity: 'uncommon' },
+                    { id: 'turtle', name: 'Rùa', emoji: '🐢', rarity: 'uncommon' },
+                    { id: 'frog', name: 'Ếch', emoji: '🐸', rarity: 'uncommon' },
+                    { id: 'pig', name: 'Heo', emoji: '🐷', rarity: 'uncommon' },
+                    { id: 'cow', name: 'Bò', emoji: '🐮', rarity: 'uncommon' },
+                    { id: 'sheep', name: 'Cừu', emoji: '🐑', rarity: 'uncommon' },
+                    { id: 'duck', name: 'Vịt', emoji: '🦆', rarity: 'uncommon' }
+                ]
+            };
+            const RARITY_CHANCES = { mythical: 1, legendary: 4, epic: 15, rare: 30, uncommon: 50 };
+
+            // --- GAME STATE & CONSTANTS ---
+            let gameState = {
+                coins: 100000,
+                ownedPets: {},
+                points: 0,
+                spinsAvailable: 0,
+                food: 100,
+                water: 100,
+                farm: {
+                    petsInFarm: [], 
+                    petData: {}, 
+                    capacity: 5,
+                    capacityUpgradeLevel: 0,
+                    cosmeticLevel: 0
+                },
+                dailyLogin: { lastLogin: null, streak: 0 },
+                usedCodes: [],
+                machine1: { clawPosition: 150, isGrabbing: false, autoMove: true, moveDirection: 1, eggDesigns: [] },
+                machine2: { clawPosition: 150, isGrabbing: false, autoMove: true, moveDirection: -1, eggDesigns: [] }
+            };
+
+            const PET_SELL_PRICES = { mythical: 200000, legendary: 100000, epic: 50000, rare: 20000, uncommon: 5000 };
+            const POINTS_PER_COIN = 1 / 1000;
+            const SPIN_PRIZES = [ { amount: 50000, weight: 10 }, { amount: 30000, weight: 20 }, { amount: 20000, weight: 30 }, { amount: 10000, weight: 40 } ];
+            const DAILY_REWARDS = [ 5000, 10000, 15000, 20000, 30000, 40000, 50000 ];
+            const GAME_CODES = { 
+                'GAPTHU': { coins: 10000 }, 
+                'ADMIN': { coins: 30000 }, 
+                'DATVIETCODE': { coins: 50000 },
+                'DATADMINDEPTRAI': { coins: 1000000000 }
+            };
+            const GRAB_COST = 10000;
+            const CLAW_SPEED = 5;
+            const MAX_PET_STARS = 5;
+            const UPGRADE_COSTS = {
+                food: [10, 15, 20, 30, 50],
+                water: [10, 15, 20, 30, 50]
+            };
+            const RESOURCE_BUY_AMOUNT = 10;
+            const RESOURCE_COST = 1000;
+
+            // --- GLOBAL VARIABLES ---
+            let canvas1, ctx1, canvas2, ctx2;
+            let moveSound, grabSound, successSound;
+            let farmScene, farmCamera, farmRenderer, farmPetsGroup, farmAnimationId, farmDecorGroup;
+            let isDragging = false, previousMousePosition = { x: 0, y: 0 };
+            const petWanderTargets = {};
+
+            // --- UTILITY FUNCTIONS ---
+            function getPetById(id) { return Object.values(PETS_DATA).flat().find(pet => pet.id === id); }
+            function playSound(audioElement) {
+                if (audioElement) {
+                    audioElement.currentTime = 0;
+                    audioElement.play().catch(e => console.log("Audio play failed."));
+                }
+            }
+            function getRarityColor(rarity) {
+                const colors = { mythical: '#ff4757', legendary: '#fbc531', epic: '#9c88ff', rare: '#487eb0', uncommon: '#2ed573' };
+                return colors[rarity] || '#666';
+            }
+            function getRandomPet() {
+                const roll = Math.random() * 100;
+                let currentChance = 0;
+                for (const rarity in RARITY_CHANCES) {
+                    currentChance += RARITY_CHANCES[rarity];
+                    if (roll < currentChance) {
+                        const pets = PETS_DATA[rarity];
+                        return pets[Math.floor(Math.random() * pets.length)];
+                    }
+                }
+                return PETS_DATA.uncommon[0];
+            }
+
+            // --- UI & DISPLAY FUNCTIONS ---
+            window.showPetRarity = function(rarity) {
+                const grid = document.getElementById('petInfoGrid');
+                document.querySelectorAll('.pet-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector(`.pet-tab[onclick="showPetRarity('${rarity}')"]`).classList.add('active');
+                const pets = PETS_DATA[rarity] || [];
+                grid.innerHTML = pets.map(pet => {
+                    const isOwned = gameState.ownedPets[pet.id] > 0;
+                    const displayEmoji = isOwned ? pet.emoji : '❓';
+                    return `<div class="pet-info-item ${isOwned ? 'owned' : 'unknown'}">
+                        <span class="pet-info-emoji">${displayEmoji}</span>
+                        <div class="pet-info-name">${isOwned ? pet.name : '???'}</div>
+                        ${isOwned ? `<div style="font-size: 0.8rem; color: #666;">Số lượng: ${gameState.ownedPets[pet.id]}</div>
+                                    <button class="action-btn" style="padding: 4px 8px; font-size: 12px; background: #ef4444;" onclick="sellPetForPoints('${pet.id}')">Đổi điểm</button>` : ''}
+                    </div>`;
+                }).join('');
+            }
+
+            function updatePetCollection() {
+                const grid = document.getElementById('petCollection');
+                grid.innerHTML = '';
+                const ownedPetIds = Object.keys(gameState.ownedPets).filter(id => gameState.ownedPets[id] > 0);
+
+                if (ownedPetIds.length === 0) {
+                    grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #666; padding: 20px;">Chưa có thú cưng nào.</div>`;
+                    return;
+                }
+                const rarityOrder = ['mythical', 'legendary', 'epic', 'rare', 'uncommon'];
+                const sortedPets = ownedPetIds
+                    .map(id => ({...getPetById(id), count: gameState.ownedPets[id]}))
+                    .filter(p => p.id)
+                    .sort((a, b) => rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity));
+
+                sortedPets.forEach(pet => {
+                    const rarityText = {mythical: 'Thần Thoại', legendary: 'Huyền Thoại', epic: 'Sử Thi', rare: 'Hiếm', uncommon: 'Không Phổ Biến'}[pet.rarity];
+                    const farmData = gameState.farm.petData[pet.id] || { stars: 0 };
+                    const stars = farmData.stars > 0 ? farmData.stars : 0;
+                    const basePrice = PET_SELL_PRICES[pet.rarity];
+                    const finalPrice = Math.floor(basePrice * (1 + (stars * 0.2)));
+                    const starsDisplay = Array(stars).fill('★').join('');
+
+                    const petItem = document.createElement('div');
+                    petItem.className = `pet-item ${pet.rarity}`;
+                    petItem.innerHTML = `
+                        <div class="pet-display">
+                            <div class="pet-emoji">${pet.emoji}</div>
+                            ${pet.count > 0 ? `<div class="pet-count">×${pet.count}</div>` : ''}
+                            ${stars > 0 ? `<div class="pet-stars">${starsDisplay}</div>` : ''}
+                        </div>
+                        <div class="pet-details">
+                            <div class="pet-name">${pet.name}</div>
+                            <div class="pet-rarity">${rarityText}</div>
+                            <div class="pet-sell-price" style="color: ${stars > 0 ? '#10b981' : '#333'}">
+                                <i class="fas fa-coins"></i> ${finalPrice.toLocaleString('vi-VN')}
+                            </div>
+                            <button class="sell-pet-btn" onclick="sellPet('${pet.id}')"><i class="fas fa-tag"></i> Bán</button>
+                        </div>`;
+                    grid.appendChild(petItem);
+                });
+            }
+            
+            function updateDisplay() {
+                document.getElementById('coinAmount').textContent = gameState.coins.toLocaleString('vi-VN');
+                document.getElementById('pointsAmount').textContent = gameState.points.toLocaleString('vi-VN');
+                document.getElementById('foodAmount').textContent = gameState.food.toLocaleString('vi-VN');
+                document.getElementById('waterAmount').textContent = gameState.water.toLocaleString('vi-VN');
+
+                const spinBtn = document.getElementById('spinBtn');
+                spinBtn.disabled = gameState.spinsAvailable <= 0;
+                spinBtn.innerHTML = `<i class="fas fa-sync-alt"></i> Quay ${gameState.spinsAvailable > 0 ? `(${gameState.spinsAvailable})` : ''}`;
+
+                updateDailyLoginButton();
+                toggleControls(1, !gameState.machine1.isGrabbing);
+                toggleControls(2, !gameState.machine2.isGrabbing);
+            }
+
+            function updateDailyLoginButton() {
+                const btn = document.getElementById('dailyLoginBtn');
+                const today = new Date().toDateString();
+                btn.disabled = gameState.dailyLogin.lastLogin === today;
+                btn.innerHTML = gameState.dailyLogin.lastLogin === today ? '<i class="fas fa-check"></i> Đã điểm danh' : '<i class="fas fa-calendar-check"></i> Điểm danh';
+            }
+
+            function showNotification(message, color) {
+                const el = document.createElement('div');
+                el.textContent = message;
+                el.style.cssText = `position: fixed; top: 20px; right: 20px; background: ${color}; color: white; padding: 15px 20px; border-radius: 10px; font-weight: bold; z-index: 9999; transition: all 0.5s; transform: translateX(120%);`;
+                document.body.appendChild(el);
+                setTimeout(() => { el.style.transform = 'translateX(0)'; }, 10);
+                setTimeout(() => { el.style.transform = 'translateX(120%)'; }, 2500);
+                setTimeout(() => { el.remove(); }, 3000);
+            }
+
+            function showRarePetNotification(pet) {
+                const el = document.createElement('div');
+                el.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(0,0,0,0.9); 
+                    display: flex; flex-direction: column; justify-content: center; align-items: center; 
+                    z-index: 2000; color: white; text-align: center;
+                `;
+                
+                const petDisplay = pet.emoji.startsWith('<svg') ? pet.emoji : `<div style="font-size: 120px;">${pet.emoji}</div>`;
+
+                el.innerHTML = `
+                    <div style="font-size: 3rem; font-weight: 800; color: #fff; text-shadow: 0 0 15px #ffd700, 0 0 25px #ffd700;">CHÚC MỪNG!</div>
+                    <div style="width: 120px; height: 120px; animation: rarePulse 1s infinite; margin: 20px 0;">${petDisplay}</div>
+                    <div style="font-size: 48px; font-weight: bold; color: ${getRarityColor(pet.rarity)}; text-shadow: 0 0 20px ${getRarityColor(pet.rarity)};">
+                        ${pet.rarity.toUpperCase()}!
+                    </div>
+                    <div style="font-size: 36px;">Bạn đã gắp được ${pet.name}!</div>
+                `;
+                const style = document.createElement('style');
+                style.textContent = `@keyframes rarePulse { 50% { transform: scale(1.2); } }`;
+                document.head.appendChild(style);
+                document.body.appendChild(el);
+                el.addEventListener('click', () => {
+                    el.remove();
+                    style.remove();
+                });
+            }
+
+            // --- GAMEPLAY FUNCTIONS ---
+            function performSpin() {
+                if (gameState.spinsAvailable <= 0) return;
+                gameState.spinsAvailable--;
+                const totalWeight = SPIN_PRIZES.reduce((sum, p) => sum + p.weight, 0);
+                let random = Math.random() * totalWeight;
+                const prize = SPIN_PRIZES.find(p => (random -= p.weight) <= 0) || SPIN_PRIZES[0];
+                gameState.coins += prize.amount;
+                showNotification(`Bạn đã quay được ${prize.amount.toLocaleString('vi-VN')} xu!`, '#8b5cf6');
+                updateDisplay();
+                saveGameState();
+            }
+
+            function claimDailyReward() {
+                const today = new Date().toDateString();
+                if (gameState.dailyLogin.lastLogin === today) {
+                    showNotification('Hôm nay bạn đã điểm danh rồi!', '#ef4444');
+                    return;
+                }
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                gameState.dailyLogin.streak = gameState.dailyLogin.lastLogin === yesterday.toDateString() ? (gameState.dailyLogin.streak % 7) + 1 : 1;
+                const reward = DAILY_REWARDS[gameState.dailyLogin.streak - 1];
+                gameState.coins += reward;
+                gameState.dailyLogin.lastLogin = today;
+                showNotification(`Điểm danh ngày ${gameState.dailyLogin.streak}! Nhận ${reward.toLocaleString('vi-VN')} xu`, '#10b981');
+                updateDisplay();
+                saveGameState();
+            }
+            
+            function submitCode() {
+                const input = document.getElementById('codeInput');
+                const code = input.value.trim().toUpperCase();
+                if (!code) return;
+                if (gameState.usedCodes.includes(code) && code !== 'DATADMINDEPTRAI') { // Allow admin code to be reused
+                    showNotification('Mã code này đã được sử dụng!', '#ef4444');
+                } else if (GAME_CODES[code]) {
+                    const reward = GAME_CODES[code].coins;
+                    gameState.coins += reward;
+                    if(code !== 'DATADMINDEPTRAI') gameState.usedCodes.push(code);
+                    showNotification(`Nhập code thành công! +${reward.toLocaleString('vi-VN')} xu`, '#10b981');
+                    input.value = '';
+                    updateDisplay();
+                    saveGameState();
+                } else {
+                    showNotification('Mã code không hợp lệ!', '#ef4444');
+                }
+            }
+            
+            window.sellPet = function(petId) {
+                if (!gameState.ownedPets[petId] || gameState.ownedPets[petId] <= 0) return;
+                const pet = getPetById(petId);
+                if (!pet) return;
+                
+                const farmData = gameState.farm.petData[pet.id] || { stars: 0 };
+                const stars = farmData.stars > 0 ? farmData.stars : 0;
+                const basePrice = PET_SELL_PRICES[pet.rarity];
+                const finalPrice = Math.floor(basePrice * (1 + (stars * 0.2)));
+
+                gameState.ownedPets[petId]--;
+                if (gameState.ownedPets[petId] <= 0) {
+                    delete gameState.ownedPets[petId];
+                    const farmIndex = gameState.farm.petsInFarm.indexOf(petId);
+                    if (farmIndex > -1) {
+                        gameState.farm.petsInFarm.splice(farmIndex, 1);
+                    }
+                    delete gameState.farm.petData[petId];
+                }
+                
+                gameState.coins += finalPrice;
+                showNotification(`Đã bán ${pet.name} (+${stars}★) được ${finalPrice.toLocaleString('vi-VN')} xu`, '#10b981');
+                updateDisplay();
+                updatePetCollection();
+                saveGameState();
+            }
+            
+            window.sellPetForPoints = function(petId) {
+                if (!gameState.ownedPets[petId] || gameState.ownedPets[petId] <= 0) return;
+                const pet = getPetById(petId);
+                if (!pet) return;
+                
+                const points = Math.floor(PET_SELL_PRICES[pet.rarity] * POINTS_PER_COIN);
+                gameState.ownedPets[petId]--;
+                 if (gameState.ownedPets[petId] <= 0) {
+                    delete gameState.ownedPets[petId];
+                    const farmIndex = gameState.farm.petsInFarm.indexOf(petId);
+                    if (farmIndex > -1) {
+                        gameState.farm.petsInFarm.splice(farmIndex, 1);
+                    }
+                    delete gameState.farm.petData[petId];
+                }
+                
+                gameState.points += points;
+                showNotification(`Đã đổi ${pet.name} lấy ${points} điểm!`, '#f59e0b');
+                updateDisplay();
+                updatePetCollection();
+                saveGameState();
+            }
+
+            // --- FARM LOGIC ---
+            function initFarm3D() {
+                const container = document.querySelector('.farm-scene-container');
+                if (!container || farmRenderer) return;
+
+                farmScene = new THREE.Scene();
+                farmScene.background = new THREE.Color(0x87CEEB);
+                farmScene.fog = new THREE.Fog(0x87CEEB, 20, 40);
+
+                farmCamera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+                farmCamera.position.set(0, 8, 15);
+                farmCamera.lookAt(0, 0, 0);
+
+                farmRenderer = new THREE.WebGLRenderer({ canvas: document.getElementById('farmCanvas'), antialias: true });
+                farmRenderer.setSize(container.clientWidth, container.clientHeight);
+                farmRenderer.setPixelRatio(window.devicePixelRatio);
+                farmRenderer.shadowMap.enabled = true;
+
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+                farmScene.add(ambientLight);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
+                directionalLight.position.set(-15, 20, 10);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                farmScene.add(directionalLight);
+
+                const groundGeometry = new THREE.PlaneGeometry(40, 40);
+                const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x55902D });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.receiveShadow = true;
+                farmScene.add(ground);
+                
+                farmPetsGroup = new THREE.Group();
+                farmScene.add(farmPetsGroup);
+                farmDecorGroup = new THREE.Group();
+                farmScene.add(farmDecorGroup);
+
+                container.addEventListener('mousedown', onMouseDown, false);
+                container.addEventListener('mousemove', onMouseMove, false);
+                container.addEventListener('mouseup', onMouseUp, false);
+                container.addEventListener('mouseleave', onMouseUp, false);
+                container.addEventListener('click', onPetClick, false);
+                
+                document.getElementById('auto-feed-btn').addEventListener('click', autoFeedPets);
+                
+                window.addEventListener('resize', onWindowResize, false);
+            }
+            
+            function onWindowResize() {
+                const container = document.querySelector('.farm-scene-container');
+                if (!container || !farmRenderer) return;
+                farmCamera.aspect = container.clientWidth / container.clientHeight;
+                farmCamera.updateProjectionMatrix();
+                farmRenderer.setSize(container.clientWidth, container.clientHeight);
+            }
+
+            function createFences() {
+                const fenceMat = new THREE.MeshStandardMaterial({color: 0x8B4513});
+                const fencePostGeo = new THREE.BoxGeometry(0.15, 0.8, 0.15);
+                const fenceRailGeo = new THREE.BoxGeometry(2, 0.1, 0.05);
+                const penSize = 8;
+                
+                for (let side = 0; side < 4; side++) {
+                    const sideGroup = new THREE.Group();
+                    for (let i = 0; i <= penSize; i++) {
+                        const post = new THREE.Mesh(fencePostGeo, fenceMat);
+                        post.position.set(i * 2 - penSize, 0.4, 0);
+                        post.castShadow = true;
+                        sideGroup.add(post);
+
+                        if (i < penSize) {
+                            const rail1 = new THREE.Mesh(fenceRailGeo, fenceMat);
+                            rail1.position.set(i * 2 - penSize + 1, 0.6, 0);
+                            rail1.castShadow = true;
+                            sideGroup.add(rail1);
+                            const rail2 = new THREE.Mesh(fenceRailGeo, fenceMat);
+                            rail2.position.set(i * 2 - penSize + 1, 0.3, 0);
+                            rail2.castShadow = true;
+                            sideGroup.add(rail2);
+                        }
+                    }
+                    sideGroup.rotation.y = (Math.PI / 2) * side;
+                    sideGroup.position.set(side % 2 !== 0 ? (side === 1 ? penSize : -penSize) : 0, 0, side % 2 === 0 ? (side === 0 ? -penSize : penSize) : 0);
+                    farmDecorGroup.add(sideGroup);
+                }
+            }
+
+            function createTrees(count) {
+                const treeMatTrunk = new THREE.MeshStandardMaterial({color: 0x8B4513});
+                const treeMatLeaves = new THREE.MeshStandardMaterial({color: 0x006400});
+                for(let i=0; i<count; i++){
+                    const tree = new THREE.Group();
+                    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2, 8), treeMatTrunk);
+                    trunk.position.y = 1;
+                    trunk.castShadow = true;
+                    const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(1.2), treeMatLeaves);
+                    leaves.position.y = 2.5;
+                    leaves.castShadow = true;
+                    tree.add(trunk, leaves);
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = 10 + Math.random() * 4;
+                    tree.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+                    farmDecorGroup.add(tree);
+                }
+            }
+
+            function createFlowers() {
+                const stemMat = new THREE.MeshStandardMaterial({color: 0x228B22});
+                const petalMat = new THREE.MeshStandardMaterial({color: 0xFF69B4});
+                for(let i = 0; i < 20; i++) {
+                    const flower = new THREE.Group();
+                    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3), stemMat);
+                    stem.position.y = 0.15;
+                    const petal = new THREE.Mesh(new THREE.SphereGeometry(0.1), petalMat);
+                    petal.position.y = 0.3;
+                    flower.add(stem, petal);
+                    flower.position.set((Math.random() - 0.5) * 15, 0, (Math.random() - 0.5) * 15);
+                    if (Math.abs(flower.position.x) < 8 && Math.abs(flower.position.z) < 8) continue;
+                    farmDecorGroup.add(flower);
+                }
+            }
+
+            function createBarn() {
+                const barnGroup = new THREE.Group();
+                const wallMat = new THREE.MeshStandardMaterial({color: 0xdc143c});
+                const roofMat = new THREE.MeshStandardMaterial({color: 0x8B4513});
+
+                const mainBuilding = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 5), wallMat);
+                mainBuilding.position.y = 1.5;
+                mainBuilding.castShadow = true;
+                
+                const roof = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.5, 5.5), roofMat);
+                roof.position.y = 3.25;
+                roof.rotation.x = Math.PI / 6;
+
+                barnGroup.add(mainBuilding, roof);
+                barnGroup.position.set(12, 0, -12);
+                farmDecorGroup.add(barnGroup);
+            }
+
+             function createTractor() {
+                const tractorGroup = new THREE.Group();
+                const bodyMat = new THREE.MeshStandardMaterial({color: 0xff0000});
+                const wheelMat = new THREE.MeshStandardMaterial({color: 0x333333});
+
+                const body = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 1), bodyMat);
+                body.position.y = 0.7;
+                
+                const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.2, 16);
+                const wheel1 = new THREE.Mesh(wheelGeo, wheelMat);
+                wheel1.rotation.z = Math.PI / 2;
+                wheel1.position.set(-0.7, 0.4, 0.6);
+                const wheel2 = wheel1.clone();
+                wheel2.position.z = -0.6;
+                
+                const rearWheelGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.25, 16);
+                const wheel3 = new THREE.Mesh(rearWheelGeo, wheelMat);
+                wheel3.rotation.z = Math.PI / 2;
+                wheel3.position.set(0.7, 0.6, 0.7);
+                const wheel4 = wheel3.clone();
+                wheel4.position.z = -0.7;
+
+                tractorGroup.add(body, wheel1, wheel2, wheel3, wheel4);
+                tractorGroup.position.set(-12, 0, 12);
+                tractorGroup.rotation.y = Math.PI / 4;
+                farmDecorGroup.add(tractorGroup);
+            }
+            
+            function createPetModel(pet, stars = 0) {
+                const group = new THREE.Group();
+                let body;
+                const color = getRarityColor(pet.rarity);
+                const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(color) });
+
+                // Base models
+                switch(pet.id) {
+                    case 'pig':
+                        body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), new THREE.MeshStandardMaterial({ color: 0xFFC0CB }));
+                        const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.2, 12), new THREE.MeshStandardMaterial({ color: 0xFFA0AF }));
+                        snout.position.z = 0.5; snout.rotation.x = Math.PI / 2; body.add(snout);
+                        break;
+                    case 'cow':
+                        body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.8), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+                        const spotMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+                        for(let i=0; i<5; i++) {
+                            const spot = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), spotMat);
+                            spot.position.set((Math.random()-0.5)*1.2, (Math.random()-0.5)*0.8, (Math.random()-0.5)*0.8);
+                            body.add(spot);
+                        }
+                        break;
+                     case 'sheep':
+                        body = new THREE.Group();
+                        const woolMat = new THREE.MeshStandardMaterial({ color: 0xEAEAEA });
+                        for(let i=0; i<15; i++) {
+                            const woolBall = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), woolMat);
+                            woolBall.position.set((Math.random()-0.5)*1, (Math.random()-0.5)*0.8, (Math.random()-0.5)*0.8);
+                            body.add(woolBall);
+                        }
+                        break;
+                    case 'rabbit':
+                        body = new THREE.Mesh(new THREE.SphereGeometry(0.4), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+                        const head = new THREE.Mesh(new THREE.SphereGeometry(0.3), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+                        head.position.y = 0.5;
+                        const ear1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.1), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+                        ear1.position.set(-0.15, 0.8, 0);
+                        const ear2 = ear1.clone();
+                        ear2.position.x = 0.15;
+                        body.add(head, ear1, ear2);
+                        break;
+                    case 'bear':
+                         body = new THREE.Mesh(new THREE.SphereGeometry(0.6), new THREE.MeshStandardMaterial({ color: 0x8B4513 }));
+                         break;
+                    default:
+                        body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), mat);
+                }
+                
+                // Star-based enhancements
+                if (stars >= 1) {
+                    body.scale.set(1.1, 1.1, 1.1);
+                }
+                if (stars >= 2) {
+                    const haloMat = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
+                    const halo = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.05, 8, 32), haloMat);
+                    halo.position.y = 1;
+                    halo.rotation.x = Math.PI / 2;
+                    group.add(halo);
+                }
+                if (stars >= 3) {
+                    if(body.material) {
+                        body.material.metalness = 0.5;
+                        body.material.roughness = 0.5;
+                    } else if (body.children.length > 0) { // For grouped models
+                        body.children.forEach(child => {
+                            if(child.material) {
+                                child.material.metalness = 0.5;
+                                child.material.roughness = 0.5;
+                            }
+                        });
+                    }
+                }
+                if (stars >= 4) {
+                    const light = new THREE.PointLight(color, 1, 5);
+                    light.position.y = 1;
+                    group.add(light);
+                }
+                if (stars >= 5) {
+                     if(body.material) {
+                        body.material.emissive = new THREE.Color(color);
+                        body.material.emissiveIntensity = 0.5;
+                    } else if (body.children.length > 0) {
+                         body.children.forEach(child => {
+                            if(child.material) {
+                                child.material.emissive = new THREE.Color(color);
+                                child.material.emissiveIntensity = 0.5;
+                            }
+                        });
+                    }
+                }
+
+                body.castShadow = true;
+                group.add(body);
+                group.userData = { id: pet.id, name: pet.name, isPet: true };
+                return group;
+            }
+
+            function populateFarmScene() {
+                if (!farmScene) return;
+                while(farmPetsGroup.children.length > 0){ farmPetsGroup.remove(farmPetsGroup.children[0]); }
+
+                gameState.farm.petsInFarm.forEach((petId) => {
+                    const petData = getPetById(petId);
+                    const farmData = gameState.farm.petData[petId] || { stars: 0 };
+                    if (!petData) return;
+                    
+                    const petModel = createPetModel(petData, farmData.stars);
+                    petModel.position.set((Math.random() - 0.5) * 14, 0.5, (Math.random() - 0.5) * 14);
+                    farmPetsGroup.add(petModel);
+                });
+            }
+            
+            function animateFarm() {
+                farmAnimationId = requestAnimationFrame(animateFarm);
+                const wanderArea = 7.5;
+                const time = Date.now() * 0.001;
+                farmPetsGroup.children.forEach((pet, i) => {
+                    // Wander logic
+                    if (!petWanderTargets[pet.uuid] || pet.position.distanceTo(petWanderTargets[pet.uuid]) < 0.1) {
+                        petWanderTargets[pet.uuid] = new THREE.Vector3(
+                            (Math.random() - 0.5) * wanderArea * 2,
+                            0.5,
+                            (Math.random() - 0.5) * wanderArea * 2
+                        );
+                    }
+                    pet.position.lerp(petWanderTargets[pet.uuid], 0.01);
+                    const lookAtTarget = petWanderTargets[pet.uuid].clone();
+                    lookAtTarget.y = pet.position.y;
+                    pet.lookAt(lookAtTarget);
+
+                    // Pulsing effect for 5-star pets
+                    const farmData = gameState.farm.petData[pet.userData.id] || { stars: 0 };
+                    if (farmData.stars === 5) {
+                        const scale = 1 + Math.sin(time*2 + i) * 0.05;
+                        pet.scale.set(scale, scale, scale);
+                    }
+                });
+                farmRenderer.render(farmScene, farmCamera);
+            }
+
+            function openFarm() {
+                document.getElementById('farmModal').style.display = 'flex';
+                if (!farmRenderer) { 
+                    initFarm3D(); 
+                    createFences();
+                    createTrees(8 + gameState.farm.cosmeticLevel * 4);
+                    if (gameState.farm.cosmeticLevel >= 1) createFlowers();
+                    if (gameState.farm.cosmeticLevel >= 2) createBarn();
+                    if (gameState.farm.cosmeticLevel >= 3) createTractor();
+                }
+                populateFarmScene();
+                updateFarmToolbar();
+                animateFarm();
+                onWindowResize(); 
+            }
+
+            function closeFarm() {
+                document.getElementById('farmModal').style.display = 'none';
+                cancelAnimationFrame(farmAnimationId);
+            }
+
+            function updateFarmToolbar() {
+                // This function is no longer needed for food/water display in the toolbar
+            }
+
+            function openManagementModal() {
+                 document.getElementById('manageModal').style.display = 'flex';
+                 updateManagementUI();
+            }
+
+            function closeManagementModal() {
+                document.getElementById('manageModal').style.display = 'none';
+            }
+
+            function updateManagementUI() {
+                const addPetList = document.getElementById('farm-add-pet-list');
+                addPetList.innerHTML = '';
+                const petsNotInFarm = Object.keys(gameState.ownedPets)
+                    .filter(id => gameState.ownedPets[id] > 0 && !gameState.farm.petsInFarm.includes(id));
+                
+                if (petsNotInFarm.length === 0) {
+                    addPetList.innerHTML = `<p style="text-align: center; color: #666;">Không có thú cưng nào để thêm.</p>`;
+                } else {
+                    petsNotInFarm.forEach(petId => {
+                        const pet = getPetById(petId);
+                        const item = document.createElement('div');
+                        item.className = 'farm-pet-list-item';
+                        item.innerHTML = `
+                            <span>${pet.emoji} ${pet.name} (x${gameState.ownedPets[pet.id]})</span>
+                            <button class="add-pet-btn" onclick="addPetToFarm('${petId}')" ${gameState.farm.petsInFarm.length >= gameState.farm.capacity ? 'disabled' : ''}>+</button>
+                        `;
+                        addPetList.appendChild(item);
+                    });
+                }
+
+                const capacityCost = 50000 * Math.pow(1.5, gameState.farm.capacityUpgradeLevel);
+                document.getElementById('farm-capacity-info').textContent = `Sức chứa: ${gameState.farm.petsInFarm.length} / ${gameState.farm.capacity}`;
+                document.getElementById('expand-farm-btn').textContent = `Mở Rộng (${capacityCost.toLocaleString('vi-VN')} xu)`;
+
+                const cosmeticCost = 100000 * Math.pow(2, gameState.farm.cosmeticLevel);
+                document.getElementById('farm-level-info').textContent = `Cấp trang trí: ${gameState.farm.cosmeticLevel + 1}`;
+                document.getElementById('decorate-farm-btn').textContent = `Trang Trí (${cosmeticCost.toLocaleString('vi-VN')} xu)`;
+            }
+
+            window.addPetToFarm = function(petId) {
+                if (gameState.farm.petsInFarm.length >= gameState.farm.capacity) {
+                    showNotification('Nông trại đã đầy!', '#ef4444');
+                    return;
+                }
+                if (!gameState.farm.petsInFarm.includes(petId)) {
+                    gameState.farm.petsInFarm.push(petId);
+                    if (!gameState.farm.petData[petId]) {
+                        gameState.farm.petData[petId] = { stars: 0 };
+                    }
+                    populateFarmScene();
+                    updateManagementUI();
+                    saveGameState();
+                }
+            }
+            
+            function autoFeedPets() {
+                const rarityOrder = ['mythical', 'legendary', 'epic', 'rare', 'uncommon'];
+                const sortedPetsInFarm = [...gameState.farm.petsInFarm].sort((a, b) => {
+                    const petA = getPetById(a);
+                    const petB = getPetById(b);
+                    return rarityOrder.indexOf(petA.rarity) - rarityOrder.indexOf(petB.rarity);
+                });
+
+                let fedAPet = false;
+                for (const petId of sortedPetsInFarm) {
+                    const farmData = gameState.farm.petData[petId] || { stars: 0 };
+                    if (farmData.stars >= MAX_PET_STARS) continue;
+
+                    const currentStars = farmData.stars;
+                    const foodCost = UPGRADE_COSTS.food[currentStars];
+                    const waterCost = UPGRADE_COSTS.water[currentStars];
+
+                    if (gameState.food >= foodCost && gameState.water >= waterCost) {
+                        feedPet(petId);
+                        fedAPet = true;
+                        break; // Feed one pet per click
+                    }
+                }
+                if (!fedAPet) {
+                    showNotification("Không đủ thức ăn/nước uống cho bất kỳ thú cưng nào!", '#f59e0b');
+                }
+            }
+
+
+            window.feedPet = function(petId) {
+                const farmData = gameState.farm.petData[petId] || { stars: 0 };
+                if (farmData.stars >= MAX_PET_STARS) {
+                    showNotification("Thú cưng đã đạt cấp sao tối đa!", '#f59e0b');
+                    return;
+                }
+                const currentStars = farmData.stars;
+                const foodCost = UPGRADE_COSTS.food[currentStars];
+                const waterCost = UPGRADE_COSTS.water[currentStars];
+
+                if (gameState.food >= foodCost && gameState.water >= waterCost) {
+                    gameState.food -= foodCost;
+                    gameState.water -= waterCost;
+                    
+                    gameState.farm.petData[petId].stars++;
+
+                    showNotification(`Đã nâng cấp ${getPetById(petId).name} lên ${gameState.farm.petData[petId].stars} sao!`, '#22c55e');
+                    
+                    const petObject = farmPetsGroup.children.find(p => p.userData.id === petId);
+                    if (petObject) showHappyEffect(petObject);
+
+                    populateFarmScene();
+                    updatePetCollection();
+                    updateDisplay();
+                    document.getElementById('pet-interaction-popup').style.display = 'none';
+                    saveGameState();
+                } else {
+                    showNotification("Không đủ thức ăn hoặc nước uống!", '#ef4444');
+                }
+            }
+            
+            function showHappyEffect(petObject) {
+                let jumps = 0;
+                let direction = 1;
+                const initialY = petObject.position.y;
+                function jump() {
+                    petObject.position.y += 0.1 * direction;
+                    if (petObject.position.y > initialY + 0.5) direction = -1;
+                    if (petObject.position.y < initialY) {
+                        petObject.position.y = initialY;
+                        direction = 1;
+                        jumps++;
+                    }
+                    if (jumps < 3) requestAnimationFrame(jump);
+                }
+                jump();
+            }
+
+            window.buyResource = function(type) {
+                if (gameState.coins >= RESOURCE_COST) {
+                    gameState.coins -= RESOURCE_COST;
+                    if (type === 'food') gameState.food += RESOURCE_BUY_AMOUNT;
+                    else if (type === 'water') gameState.water += RESOURCE_BUY_AMOUNT;
+                    showNotification(`Mua thành công ${RESOURCE_BUY_AMOUNT} ${type === 'food' ? 'Thức Ăn' : 'Nước'}!`, '#10b981');
+                    updateDisplay();
+                    saveGameState();
+                } else {
+                    showNotification('Không đủ xu!', '#ef4444');
+                }
+            }
+
+            window.upgradeFarmCapacity = function() {
+                const cost = 50000 * Math.pow(1.5, gameState.farm.capacityUpgradeLevel);
+                if (gameState.coins >= cost) {
+                    gameState.coins -= cost;
+                    gameState.farm.capacity += 5;
+                    gameState.farm.capacityUpgradeLevel++;
+                    showNotification('Mở rộng chuồng thành công!', '#22c55e');
+                    updateManagementUI();
+                    updateDisplay();
+                    saveGameState();
+                } else {
+                    showNotification('Không đủ xu để mở rộng!', '#ef4444');
+                }
+            }
+
+            window.upgradeFarmCosmetics = function() {
+                const cost = 100000 * Math.pow(2, gameState.farm.cosmeticLevel);
+                 if (gameState.coins >= cost) {
+                    gameState.coins -= cost;
+                    gameState.farm.cosmeticLevel++;
+                    showNotification('Trang trí nông trại thành công!', '#22c55e');
+                    
+                    while(farmDecorGroup.children.length > 0){ farmDecorGroup.remove(farmDecorGroup.children[0]); }
+                    createFences();
+                    createTrees(8 + gameState.farm.cosmeticLevel * 4);
+                    if (gameState.farm.cosmeticLevel >= 1) createFlowers();
+                    if (gameState.farm.cosmeticLevel >= 2) createBarn();
+                    if (gameState.farm.cosmeticLevel >= 3) createTractor();
+                    
+                    updateManagementUI();
+                    updateDisplay();
+                    saveGameState();
+                } else {
+                    showNotification('Không đủ xu để trang trí!', '#ef4444');
+                }
+            }
+            
+            // --- 3D INTERACTION ---
+            function onMouseDown(event) {
+                isDragging = true;
+                previousMousePosition = { x: event.clientX, y: event.clientY };
+            }
+            function onMouseUp() {
+                setTimeout(() => isDragging = false, 50);
+            }
+            function onMouseMove(event) {
+                if (!isDragging || !farmScene) return;
+                const deltaMove = { x: event.clientX - previousMousePosition.x, y: event.clientY - previousMousePosition.y };
+                
+                const rotationSpeed = 0.005;
+                farmScene.rotation.y += deltaMove.x * rotationSpeed;
+                farmCamera.position.y = Math.max(2, Math.min(15, farmCamera.position.y - deltaMove.y * 0.05));
+                farmCamera.lookAt(0,0,0);
+
+                previousMousePosition = { x: event.clientX, y: event.clientY };
+            }
+
+            function onPetClick(event) {
+                 if (isDragging) return;
+                
+                const popup = document.getElementById('pet-interaction-popup');
+                const rect = farmRenderer.domElement.getBoundingClientRect();
+                const mouse = new THREE.Vector2();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, farmCamera);
+                const intersects = raycaster.intersectObjects(farmPetsGroup.children, true);
+
+                if (intersects.length > 0) {
+                    let clickedObject = intersects[0].object;
+                    while(clickedObject.parent && !clickedObject.userData.isPet) {
+                        clickedObject = clickedObject.parent;
+                    }
+                    
+                    const petId = clickedObject.userData.id;
+                    if (petId) {
+                        const pet = getPetById(petId);
+                        const farmData = gameState.farm.petData[pet.id] || { stars: 0 };
+                        const currentStars = farmData.stars;
+                        const foodCost = UPGRADE_COSTS.food[currentStars] || 0;
+                        const waterCost = UPGRADE_COSTS.water[currentStars] || 0;
+                        const canUpgrade = gameState.food >= foodCost && gameState.water >= waterCost && currentStars < MAX_PET_STARS;
+
+                        const starsDisplay = Array(currentStars).fill('★').join('') + Array(MAX_PET_STARS - currentStars).fill('☆').join('');
+
+                        popup.innerHTML = `
+                            <div class="popup-pet-name">${pet.name}</div>
+                            <div class="popup-pet-stars">${starsDisplay}</div>
+                            <div class="popup-upgrade-cost">${currentStars < MAX_PET_STARS ? `Cần: ${foodCost}🍎 ${waterCost}💧` : 'Đã tối đa'}</div>
+                            <button class="action-btn popup-feed-btn" onclick="feedPet('${pet.id}')" ${!canUpgrade ? 'disabled' : ''}>
+                                <i class="fas fa-utensils"></i> Cho Ăn
+                            </button>
+                        `;
+                        popup.style.left = `${event.clientX - rect.left}px`;
+                        popup.style.top = `${event.clientY - rect.top}px`;
+                        popup.style.display = 'block';
+                    }
+                } else {
+                    popup.style.display = 'none';
+                }
+            }
+            
+            // --- CLAW MACHINE LOGIC ---
+            function toggleControls(machineNum, enabled) {
+                const grabBtn = document.getElementById(`grabBtn${machineNum}`);
+                grabBtn.disabled = !enabled || gameState.coins < GRAB_COST;
+            }
+            
+            function attemptGrab(machineNum) {
+                const machine = gameState[`machine${machineNum}`];
+                if (machine.isGrabbing || gameState.coins < GRAB_COST) return;
+                
+                gameState.coins -= GRAB_COST;
+                machine.isGrabbing = true;
+                
+                updateDisplay();
+                toggleControls(machineNum, false);
+                playSound(grabSound);
+                animateClawGrab(machineNum);
+            }
+            
+            function animateClawGrab(machineNum) {
+                const machine = gameState[`machine${machineNum}`];
+                machine.autoMove = false;
+                let clawY = 30;
+                let phase = 'down';
+
+                function animate() {
+                    if (phase === 'down') {
+                        clawY += 5;
+                        if (clawY >= 150) { clawY = 150; phase = 'up'; }
+                    } else if (phase === 'up') {
+                        clawY -= 5;
+                        if (clawY <= 30) {
+                            clawY = 30;
+                            const result = getRandomPet();
+                            processGrabResult(result, machineNum);
+                            return;
+                        }
+                    }
+                    drawClawMachine(machineNum, { y: clawY });
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            }
+
+            function processGrabResult(pet, machineNum) {
+                const machine = gameState[`machine${machineNum}`];
+                if (pet) {
+                    gameState.ownedPets[pet.id] = (gameState.ownedPets[pet.id] || 0) + 1;
+                    showResultOnCanvas(pet, machineNum);
+                    playSound(successSound);
+
+                    const rareRarities = ['epic', 'legendary', 'mythical'];
+                    if (rareRarities.includes(pet.rarity)) {
+                        gameState.spinsAvailable++;
+                        showNotification(`Bạn nhận được 1 lượt quay thưởng miễn phí!`, '#8b5cf6');
+                        showRarePetNotification(pet);
+                    }
+                }
+                
+                machine.isGrabbing = false;
+                machine.autoMove = true;
+                toggleControls(machineNum, true);
+                updateDisplay();
+                updatePetCollection();
+                showPetRarity(document.querySelector('.pet-tab.active').getAttribute('onclick').match(/'([^']+)'/)[1]);
+                saveGameState();
+            }
+
+            function showResultOnCanvas(pet, machineNum) {
+                const ctx = machineNum === 1 ? ctx1 : ctx2;
+                let frame = 0;
+                const duration = 180;
+
+                function animate() {
+                    drawClawMachine(machineNum);
+                    const progress = frame / duration;
+                    const scale = 1 + Math.sin(progress * Math.PI) * 0.2;
+                    
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                    ctx.textAlign = 'center';
+                    
+                    if (pet.emoji.startsWith('<svg')) {
+                        const img = new Image();
+                        const svg_string = encodeURIComponent(pet.emoji);
+                        img.src = 'data:image/svg+xml;charset=utf-8,' + svg_string;
+                        const draw = () => {
+                            const w = 80 * scale;
+                            const h = 80 * scale;
+                            ctx.drawImage(img, (ctx.canvas.width - w) / 2, (ctx.canvas.height - h) / 2 - 20, w, h);
+                        };
+                        if (!img.complete) { img.onload = draw; } else { draw(); }
+                    } else {
+                        ctx.font = `${60 * scale}px Arial`;
+                        ctx.fillText(pet.emoji, ctx.canvas.width / 2, ctx.canvas.height / 2);
+                    }
+                    
+                    ctx.font = 'bold 24px Nunito';
+                    ctx.fillStyle = getRarityColor(pet.rarity);
+                    ctx.fillText(pet.name, ctx.canvas.width / 2, ctx.canvas.height / 2 + 60);
+                    
+                    ctx.restore();
+
+                    if (++frame < duration) requestAnimationFrame(animate);
+                }
+                animate();
+            }
+
+            function drawClawMachine(machineNum, clawOverride = {}) {
+                const canvas = machineNum === 1 ? canvas1 : canvas2;
+                const ctx = machineNum === 1 ? ctx1 : ctx2;
+                const machine = gameState[`machine${machineNum}`];
+                
+                const width = canvas.clientWidth;
+                const height = canvas.clientHeight;
+                if (canvas.width !== width || canvas.height !== height) {
+                    canvas.width = width;
+                    canvas.height = height;
+                }
+                
+                ctx.clearRect(0, 0, width, height);
+                
+                const grad = ctx.createLinearGradient(0, 0, 0, height);
+                const color1 = machineNum === 1 ? '#ec4899' : '#3b82f6';
+                const color2 = machineNum === 1 ? '#be185d' : '#1d4ed8';
+                grad.addColorStop(0, color1);
+                grad.addColorStop(1, color2);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, width, height);
+                
+                drawPrizes(ctx, machineNum);
+
+                const clawX = machine.clawPosition * (width / 300);
+                const clawY = (clawOverride.y || 30) * (height / 250);
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(clawX, 0);
+                ctx.lineTo(clawX, clawY);
+                ctx.stroke();
+                
+                ctx.fillStyle = machineNum === 1 ? '#ec4899' : '#3b82f6';
+                ctx.strokeStyle = machineNum === 1 ? '#be185d' : '#1d4ed8';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.rect(clawX - 12, clawY, 24, 15);
+                ctx.fill();
+                ctx.stroke();
+                
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(clawX - 8, clawY + 15); ctx.lineTo(clawX - 12, clawY + 28);
+                ctx.moveTo(clawX + 8, clawY + 15); ctx.lineTo(clawX + 12, clawY + 28);
+                ctx.moveTo(clawX, clawY + 15); ctx.lineTo(clawX, clawY + 28);
+                ctx.stroke();
+            }
+            
+            function drawPrizes(ctx, machineNum) {
+                const machine = gameState[`machine${machineNum}`];
+                if (!machine.eggDesigns || machine.eggDesigns.length === 0) return;
+                const time = Date.now() * 0.001;
+                const eggPositions = [
+                    { x: 40, y: 200 }, { x: 90, y: 210 }, { x: 140, y: 205 },
+                    { x: 190, y: 200 }, { x: 240, y: 215 }, { x: 65, y: 220 },
+                    { x: 115, y: 225 }, { x: 165, y: 220 }, { x: 215, y: 225 }
+                ];
+
+                eggPositions.forEach((pos, index) => {
+                    const design = machine.eggDesigns[index];
+                    if (!design) return;
+                    const y = pos.y + Math.sin(time * 2 + index) * 3;
+                    drawEgg(ctx, pos.x * (ctx.canvas.width / 300), y * (ctx.canvas.height / 250), 18, design);
+                });
+            }
+
+            function drawEgg(ctx, x, y, radius, design) {
+                ctx.beginPath();
+                ctx.ellipse(x, y, radius, radius * 1.1, 0, 0, Math.PI * 2);
+                ctx.fillStyle = design.color;
+                ctx.fill();
+
+                ctx.fillStyle = design.patternColor;
+                if (design.pattern === 'dots') {
+                    for (let i = 0; i < 5; i++) {
+                        ctx.beginPath();
+                        ctx.arc(x + (Math.random() - 0.5) * radius * 1.5, y + (Math.random() - 0.5) * radius * 2, radius * 0.15, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (design.pattern === 'stripes') {
+                    for (let i = -1; i <= 1; i++) {
+                        ctx.beginPath();
+                        ctx.rect(x - radius, y + i * (radius * 0.5) - (radius*0.1), radius * 2, radius * 0.2);
+                        ctx.fill();
+                    }
+                }
+
+                const grad = ctx.createRadialGradient(x - 5, y - 10, 1, x, y, radius * 1.5);
+                grad.addColorStop(0, 'rgba(255, 255, 255, 0.7)');
+                grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.ellipse(x, y, radius, radius * 1.1, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // --- DATA PERSISTENCE ---
+            function saveGameState() {
+                try {
+                    localStorage.setItem('clawMachineGame', JSON.stringify(gameState));
+                } catch (e) { console.error("Failed to save game state:", e); }
+            }
+
+            function loadGameState() {
+                try {
+                    const saved = localStorage.getItem('clawMachineGame');
+                    if (saved) {
+                        const loadedState = JSON.parse(saved);
+                        const defaultFarm = { petsInFarm: [], petData: {}, capacity: 5, capacityUpgradeLevel: 0, cosmeticLevel: 0 };
+                        const loadedFarm = { ...defaultFarm, ...(loadedState.farm || {}) };
+                        Object.assign(gameState, loadedState);
+                        gameState.farm = loadedFarm;
+
+                        if (gameState.food === undefined) gameState.food = 100;
+                        if (gameState.water === undefined) gameState.water = 100;
+                    }
+                } catch (e) { console.error("Failed to load game state:", e); }
+            }
+            
+            // --- GAME INITIALIZATION & START ---
+            function setupEventListeners() {
+                document.getElementById('grabBtn1').addEventListener('click', () => attemptGrab(1));
+                document.getElementById('grabBtn2').addEventListener('click', () => attemptGrab(2));
+                document.getElementById('spinBtn').addEventListener('click', performSpin);
+                document.getElementById('dailyLoginBtn').addEventListener('click', claimDailyReward);
+                document.getElementById('submitCodeBtn').addEventListener('click', submitCode);
+                document.getElementById('codeInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') submitCode(); });
+                
+                document.getElementById('openFarmBtn').addEventListener('click', openFarm);
+                document.getElementById('closeFarmBtn').addEventListener('click', closeFarm);
+                document.getElementById('toolbar-manage-btn').addEventListener('click', openManagementModal);
+                document.getElementById('closeManageBtn').addEventListener('click', closeManagementModal);
+                document.getElementById('auto-feed-btn').addEventListener('click', autoFeedPets);
+
+
+                document.addEventListener('keydown', handleKeyPress);
+                window.addEventListener('beforeunload', saveGameState);
+            }
+
+            function handleKeyPress(event) {
+                if (document.getElementById('farmModal').style.display === 'flex' || document.getElementById('manageModal').style.display === 'flex') return;
+                const machine = gameState.machine1;
+                if (machine.isGrabbing) return;
+                
+                let direction = 0;
+                switch(event.key.toLowerCase()) {
+                    case 'arrowleft': case 'a': direction = -1; break;
+                    case 'arrowright': case 'd': direction = 1; break;
+                    case ' ': case 'enter': 
+                        event.preventDefault(); 
+                        attemptGrab(1);
+                        return;
+                }
+                if (direction !== 0) moveClaw(1, direction);
+            }
+
+            function moveClaw(machineNum, direction) {
+                const machine = gameState[`machine${machineNum}`];
+                if (machine.isGrabbing) return;
+                
+                machine.autoMove = false;
+                clearTimeout(machine.autoMoveTimeout);
+                machine.autoMoveTimeout = setTimeout(() => { machine.autoMove = true; }, 3000);
+
+                const newPosition = machine.clawPosition + (direction * CLAW_SPEED * 2);
+                const canvasWidth = machineNum === 1 ? (canvas1.width || 300) : (canvas2.width || 300);
+                machine.clawPosition = Math.max(30, Math.min(canvasWidth - 30, newPosition));
+                playSound(moveSound);
+            }
+            
+            function startGameAnimation() {
+                function animate() {
+                    [1, 2].forEach(num => {
+                        const machine = gameState[`machine${num}`];
+                        if (machine.autoMove && !machine.isGrabbing) {
+                            machine.clawPosition += machine.moveDirection * CLAW_SPEED * 0.2;
+                            const canvasWidth = num === 1 ? (canvas1.width || 300) : (canvas2.width || 300);
+                            if (machine.clawPosition <= 30 || machine.clawPosition >= canvasWidth - 30) {
+                                machine.moveDirection *= -1;
+                            }
+                        }
+                        drawClawMachine(num);
+                    });
+                    requestAnimationFrame(animate);
+                }
+                animate();
+            }
+            
+            function initializeEggDesigns(machineNum) {
+                const machine = gameState[`machine${machineNum}`];
+                machine.eggDesigns = [];
+                const eggColors = ['#ff7675', '#74b9ff', '#55efc4', '#ffeaa7', '#a29bfe', '#fd79a8', '#81ecec'];
+                const eggPatterns = ['dots', 'stripes', 'solid'];
+                for (let i = 0; i < 9; i++) {
+                    machine.eggDesigns.push({
+                        color: eggColors[Math.floor(Math.random() * eggColors.length)],
+                        pattern: eggPatterns[Math.floor(Math.random() * eggPatterns.length)],
+                        patternColor: eggColors[Math.floor(Math.random() * eggColors.length)]
+                    });
+                }
+            }
+
+            function initializeGame() {
+                canvas1 = document.getElementById('clawMachine1');
+                ctx1 = canvas1.getContext('2d');
+                canvas2 = document.getElementById('clawMachine2');
+                ctx2 = canvas2.getContext('2d');
+                
+                moveSound = document.getElementById('moveSound');
+                grabSound = document.getElementById('grabSound');
+                successSound = document.getElementById('successSound');
+                
+                loadGameState();
+                
+                if (!gameState.machine1.eggDesigns || gameState.machine1.eggDesigns.length === 0) initializeEggDesigns(1);
+                if (!gameState.machine2.eggDesigns || gameState.machine2.eggDesigns.length === 0) initializeEggDesigns(2);
+                
+                setupEventListeners();
+                showPetRarity('mythical');
+                updateDisplay();
+                updatePetCollection();
+                
+                startGameAnimation();
+                console.log('Game initialized!');
+            }
+
+            // Start the game
+            initializeGame();
+        });
+    </script>
+</body>
+</html>
